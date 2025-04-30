@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import "./Dealers.css";
 import "../assets/style.css";
 import positive_icon from "../assets/positive.png";
 import neutral_icon from "../assets/neutral.png";
 import negative_icon from "../assets/negative.png";
 import review_icon from "../assets/reviewbutton.png";
-import Header from '../Header/Header';
+import Header from "../Header/Header";
 
 const Dealer = () => {
   const [dealer, setDealer] = useState({});
@@ -24,7 +24,7 @@ const Dealer = () => {
 
   const get_dealer = async () => {
     const res = await fetch(dealer_url, {
-      method: "GET"
+      method: "GET",
     });
     const retobj = await res.json();
 
@@ -36,7 +36,7 @@ const Dealer = () => {
 
   const get_reviews = async () => {
     const res = await fetch(reviews_url, {
-      method: "GET"
+      method: "GET",
     });
     const retobj = await res.json();
 
@@ -50,8 +50,12 @@ const Dealer = () => {
   };
 
   const senti_icon = (sentiment) => {
-    let icon = sentiment === "positive" ? positive_icon :
-      sentiment === "negative" ? negative_icon : neutral_icon;
+    let icon =
+      sentiment === "positive"
+        ? positive_icon
+        : sentiment === "negative"
+        ? negative_icon
+        : neutral_icon;
     return icon;
   };
 
@@ -61,7 +65,11 @@ const Dealer = () => {
     if (sessionStorage.getItem("username")) {
       setPostReview(
         <a href={post_review}>
-          <img src={review_icon} style={{ width: '10%', marginLeft: '10px', marginTop: '10px' }} alt='Post Review' />
+          <img
+            src={review_icon}
+            style={{ width: "10%", marginLeft: "10px", marginTop: "10px" }}
+            alt="Post Review"
+          />
         </a>
       );
     }
@@ -71,9 +79,13 @@ const Dealer = () => {
     <div style={{ margin: "20px" }}>
       <Header />
       <div style={{ marginTop: "10px" }}>
-        <h1 style={{ color: "grey" }}>{dealer?.full_name || "Dealer Info"}{postReview}</h1>
+        <h1 style={{ color: "grey" }}>
+          {dealer?.full_name || "Dealer Info"}
+          {postReview}
+        </h1>
         <h4 style={{ color: "grey" }}>
-          {dealer?.city}, {dealer?.address}, Zip - {dealer?.zip}, {dealer?.state}
+          {dealer?.city}, {dealer?.address}, Zip - {dealer?.zip},{" "}
+          {dealer?.state}
         </h4>
       </div>
       <div className="reviews_panel">
@@ -82,12 +94,20 @@ const Dealer = () => {
         ) : unreviewed === true ? (
           <div>No reviews yet!</div>
         ) : (
-          reviews.map(review => (
-            <div className='review_panel' key={review.id || review.name + review.review}>
-              <img src={senti_icon(review.sentiment)} className="emotion_icon" alt='Sentiment' />
-              <div className='review'>{review.review}</div>
+          reviews.map((review) => (
+            <div
+              className="review_panel"
+              key={review.id || review.name + review.review}
+            >
+              <img
+                src={senti_icon(review.sentiment)}
+                className="emotion_icon"
+                alt="Sentiment"
+              />
+              <div className="review">{review.review}</div>
               <div className="reviewer">
-                {review.name} {review.car_make} {review.car_model} {review.car_year}
+                {review.name} {review.car_make} {review.car_model}{" "}
+                {review.car_year}
               </div>
             </div>
           ))
