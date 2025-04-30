@@ -1,15 +1,13 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
+from django.shortcuts import render
+from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import logout, login, authenticate
-from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime
 import logging
 import json
 from .populate import initiate
-
 from .models import CarMake, CarModel
+from .restapis import get_request, analyze_review_sentiments, post_review  # Import post_review
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -88,3 +86,67 @@ def get_cars(request):
     except Exception as e:
         logger.error(f"Error fetching cars: {e}")
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+# View to get the list of dealerships, with optional filtering by state
+def get_dealerships(request, state="All"):
+    if state == "All":
+        endpoint = "/fetchDealers"
+    else:
+        endpoint = f"/fetchDealers/{state}"
+    
+    dealerships = get_request(endpoint)  # Fetch data using get_request
+    if dealerships:
+        return JsonResponse({"status": 200, "dealers": dealerships})
+    else:
+        return JsonResponse({"status": 500, "message": "Failed to fetch dealerships"})
+
+# View to get dealer details by dealer_id
+def get_dealer_details(request, dealer_id):
+    if dealer_id:
+        endpoint = f"/fetchDealer/{str(dealer_id)}"
+        dealership = get_request(endpoint)
+        if dealership:
+            return JsonResponse({"status": 200, "dealer": dealership})
+        else:
+            logger.error(f"Failed to fetch details for dealer id: {dealer_id}")
+            return JsonResponse({"status": 404, "message": "Dealer not found"})
+    else:
+        return JsonResponse({"status": 400, "message": "Bad Request"})
+
+# Function to get reviews for a specific dealer and analyze their sentiment
+def get_dealer_reviews(request, dealer_id):
+    if dealer_id:
+        endpoint = f"/fetchReviews/dealer/{str(dealer_id)}"
+        reviews = get_request(endpoint)
+
+        if reviews:
+            for review_detail in reviews:
+                response = analyze_review_sentiments(review_detail['review'])
+                if response and 'sentiment' in response:
+                    review_detail['sentiment'] = response['sentiment']
+                else:
+                    review_detail['sentiment'] = 'Unknown'
+
+            return JsonResponse({"status": 200, "reviews": reviews})
+        else:
+            logger.error(f"No reviews found for dealer id: {dealer_id}")
+            return JsonResponse({"status": 404, "message": "No reviews found"})
+    else:
+        return JsonResponse({"status": 400, "message": "Bad Request"})
+
+# View to handle adding a review
+def add_review(request):
+    if request.method != "POST":
+        return JsonResponse({"status": 405, "message": "Method Not Allowed"})
+    
+    if not request.user.is_anonymous:
+        try:
+            data = json.loads(request.body)
+            response = post_review(data)
+            print(response)
+            return JsonResponse({"status": 200, "message": "Review posted successfully"})
+        except Exception as e:
+            logger.error(f"Error in posting review: {str(e)}")
+            return JsonResponse({"status": 401, "message": f"Error in posting review: {str(e)}"})
+    else:
+        return JsonResponse({"status": 403, "message": "Unauthorized"})
