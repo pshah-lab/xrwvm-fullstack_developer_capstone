@@ -5,6 +5,9 @@ from django.contrib.auth import logout, login, authenticate
 from django.views.decorators.csrf import csrf_exempt
 import logging
 import json
+from django.shortcuts import render
+from django.conf import settings
+import os
 from .populate import initiate
 from .models import CarMake, CarModel
 from .restapis import get_request, analyze_review_sentiments, post_review  # Import post_review
@@ -150,3 +153,7 @@ def add_review(request):
             return JsonResponse({"status": 401, "message": f"Error in posting review: {str(e)}"})
     else:
         return JsonResponse({"status": 403, "message": "Unauthorized"})
+
+
+def index(request):
+    return render(request, os.path.join(settings.BASE_DIR, 'frontend/build', 'index.html'))        
